@@ -2024,15 +2024,19 @@ var TextRevealer = (function () {
        * @param {Object} - Results of the Wikipedia, Dictionary, etc. call.
        */
       displayPopover: function () {
+        // Remove any existing popovers
+        this.removeExistingPopovers();
+
         const span = document.createElement("span");
-        span.classList.add('trjs');
+        span.classList.add('trjs-container');
 
         const popover = document.createElement('dfn');
+        popover.classList.add('trjs-popover-wrapper');
         popover.innerHTML = `
           <div class="trjs-popover ${options.skin === 'dark' ? 'trjs-popover--dark' : ''}">
             <div id="trjs-close">
-              <svg class="icon" viewBox="0 0 32 32">
-                <path d="M31.708 25.708c-0-0-0-0-0-0l-9.708-9.708 9.708-9.708c0-0 0-0 0-0 0.105-0.105 0.18-0.227 0.229-0.357 0.133-0.356 0.057-0.771-0.229-1.057l-4.586-4.586c-0.286-0.286-0.702-0.361-1.057-0.229-0.13 0.048-0.252 0.124-0.357 0.228 0 0-0 0-0 0l-9.708 9.708-9.708-9.708c-0-0-0-0-0-0-0.105-0.104-0.227-0.18-0.357-0.228-0.356-0.133-0.771-0.057-1.057 0.229l-4.586 4.586c-0.286 0.286-0.361 0.702-0.229 1.057 0.049 0.13 0.124 0.252 0.229 0.357 0 0 0 0 0 0l9.708 9.708-9.708 9.708c-0 0-0 0-0 0-0.104 0.105-0.18 0.227-0.229 0.357-0.133 0.355-0.057 0.771 0.229 1.057l4.586 4.586c0.286 0.286 0.702 0.361 1.057 0.229 0.13-0.049 0.252-0.124 0.357-0.229 0-0 0-0 0-0l9.708-9.708 9.708 9.708c0 0 0 0 0 0 0.105 0.105 0.227 0.18 0.357 0.229 0.356 0.133 0.771 0.057 1.057-0.229l4.586-4.586c0.286-0.286 0.362-0.702 0.229-1.057-0.049-0.13-0.124-0.252-0.229-0.357z"></path>
+              <svg class="icon" viewBox="0 0 32 32" width="16" height="16">
+                <path d="M31.708 25.708c-0-0-0-0-0-0l-9.708-9.708 9.708-9.708c0-0 0-0 0-0 0.105-0.105 0.18-0.227 0.229-0.357 0.133-0.356 0.057-0.771-0.229-1.057l-4.586-4.586c-0.286-0.286-0.702-0.361-1.057-0.229-0.13 0.048-0.252 0.124-0.357 0.228 0 0-0 0-0 0l-9.708 9.708-9.708-9.708c-0-0-0-0-0-0-0.105-0.104-0.227-0.18-0.357-0.228-0.356-0.133-0.771-0.057-1.057 0.229l-4.586 4.586c-0.286 0.286-0.361 0.702-0.229 1.057 0.049 0.13 0.124 0.252 0.229 0.357 0 0 0 0 0 0l9.708 9.708-9.708 9.708c-0 0-0 0-0 0-0.105 0.105-0.18 0.227-0.229 0.357-0.133 0.355-0.057 0.771 0.229 1.057l4.586 4.586c0.286 0.286 0.702 0.361 1.057 0.229 0.13-0.049 0.252-0.124 0.357-0.229 0-0 0-0 0-0l9.708-9.708 9.708 9.708c0 0 0 0 0 0 0.105 0.105 0.227 0.18 0.357 0.229 0.356 0.133 0.771 0.057 1.057-0.229l4.586-4.586c0.286-0.286 0.362-0.702 0.229-1.057-0.049-0.13-0.124-0.252-0.229-0.357z"></path>
               </svg>
             </div>
             <div class="trjs__header"></div>
@@ -2064,25 +2068,58 @@ var TextRevealer = (function () {
 
           this.positionPopover(rangeSpan, span);
 
-          document.getElementById('trjs-close').addEventListener('click', () => {
+          document.getElementById('trjs-close').addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
             this.closePopover(rangeSpan, span);
           });
+
+          // Add click event listener to close popover when clicking outside
+          setTimeout(() => {
+            document.addEventListener('click', this.handleOutsideClick.bind(this));
+          }, 0);
         }
+      },
+
+      removeExistingPopovers: function () {
+        const existingPopovers = document.querySelectorAll('.trjs-container');
+        existingPopovers.forEach(popover => {
+          const rangeSpan = popover.querySelector('dfn');
+          if (rangeSpan) {
+            this.closePopover(rangeSpan, popover);
+          } else {
+            popover.remove();
+          }
+        });
       },
 
       closePopover: function (rangeSpan, popoverSpan) {
         // Replace the range span with its original content
-        const parent = rangeSpan.parentNode;
-        while (rangeSpan.firstChild) {
-          parent.insertBefore(rangeSpan.firstChild, rangeSpan);
+        if (rangeSpan && rangeSpan.parentNode) {
+          const parent = rangeSpan.parentNode;
+          while (rangeSpan.firstChild) {
+            parent.insertBefore(rangeSpan.firstChild, rangeSpan);
+          }
+          parent.removeChild(rangeSpan);
         }
-        parent.removeChild(rangeSpan);
 
         // Remove the popover
-        popoverSpan.remove();
+        if (popoverSpan) {
+          popoverSpan.remove();
+        }
+
+        // Remove the event listener for outside clicks
+        document.removeEventListener('click', this.handleOutsideClick);
 
         this.text = null;
         this.targetTag = null;
+      },
+
+      handleOutsideClick: function (event) {
+        const popover = document.querySelector('.trjs-container');
+        if (popover && !popover.contains(event.target)) {
+          this.removeExistingPopovers();
+        }
       },
 
       positionPopover: function (rangeSpan, popoverSpan) {
