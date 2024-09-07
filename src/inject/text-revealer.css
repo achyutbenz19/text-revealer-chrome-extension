@@ -13,6 +13,7 @@
 }
 
 .trjs {
+  position: absolute;
   background-color: #fff9c4;
   user-select: none;
   -moz-user-select: none;
@@ -105,6 +106,10 @@
   font-family: "Open Sans";
   font-style: normal;
   z-index: 9999;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 5px;
 }
 
 .trjs .trjs-popover--dark {
@@ -312,4 +317,26 @@
   max-width: 80vw;
   max-height: 80vh;
   overflow: auto;
+}
+
+.trjs-popover .trjs__header {
+  /* Existing styles */
+}
+
+.trjs-popover .trjs__header ul,
+.trjs-popover .trjs__header ol {
+  padding-left: 20px;
+}
+
+.trjs-popover .trjs__header li {
+  margin-bottom: 5px;
+}
+
+.trjs-popover .trjs__header p {
+  margin-bottom: 10px;
+}
+
+.trjs-popover .trjs__header a {
+  color: inherit;
+  text-decoration: underline;
 }

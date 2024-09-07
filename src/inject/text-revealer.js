@@ -1614,31 +1614,6 @@ var TextRevealer = (function () {
 
   var Template$3 = runtime$1.template({
     "1": function (container, depth0, helpers, partials, data) {
-      var stack1, lookupProperty = container.lookupProperty || function (parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-      };
-
-      return ((stack1 = lookupProperty(helpers, "unless").call(depth0 != null ? depth0 : (container.nullContext || {}), ((stack1 = ((stack1 = (depth0 != null ? lookupProperty(depth0, "data") : depth0)) != null ? lookupProperty(stack1, "dictionary") : stack1)) != null ? lookupProperty(stack1, "shortDef") : stack1), { "name": "unless", "hash": {}, "fn": container.program(2, data, 0), "inverse": container.noop, "data": data, "loc": { "source": "popover.hbs", "start": { "line": 2, "column": 4 }, "end": { "line": 4, "column": 15 } } })) != null ? stack1 : "");
-    }, "2": function (container, depth0, helpers, partials, data) {
-      return "      <p>Sorry, no results found.</p>\n";
-    }, "compiler": [8, ">= 4.3.0"], "main": function (container, depth0, helpers, partials, data) {
-      var stack1, lookupProperty = container.lookupProperty || function (parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-      };
-
-      return ((stack1 = lookupProperty(helpers, "unless").call(depth0 != null ? depth0 : (container.nullContext || {}), ((stack1 = (depth0 != null ? lookupProperty(depth0, "data") : depth0)) != null ? lookupProperty(stack1, "wikiSearch") : stack1), { "name": "unless", "hash": {}, "fn": container.program(1, data, 0), "inverse": container.noop, "data": data, "loc": { "source": "popover.hbs", "start": { "line": 1, "column": 2 }, "end": { "line": 5, "column": 13 } } })) != null ? stack1 : "");
-    }, "useData": true
-  });
-  runtime$1.registerPartial('/_noresults', Template$3);
-
-  var Template$4 = runtime$1.template({
-    "1": function (container, depth0, helpers, partials, data) {
       return "<div disabled class=\"trjs-popover trjs-popover--dark\">\n";
     }, "3": function (container, depth0, helpers, partials, data) {
       return "<div disabled class=\"trjs-popover\">\n";
@@ -1956,10 +1931,8 @@ var TextRevealer = (function () {
           const selection = window.getSelection();
           if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
-            const clonedContents = range.cloneContents();
-            const div = document.createElement('div');
-            div.appendChild(clonedContents);
-            this.text = div.innerHTML;
+            const fragment = range.cloneContents();
+            this.text = this.sanitizeAndPreserveHTML(fragment);
 
             if (this.text) {
               this.displayPopover();
@@ -1968,6 +1941,29 @@ var TextRevealer = (function () {
         } catch (error) {
           console.error('handleTextReveal error: ', error);
         }
+      },
+
+      sanitizeAndPreserveHTML: function (fragment) {
+        const div = document.createElement('div');
+        div.appendChild(fragment.cloneNode(true));
+
+        // Remove any script tags
+        const scripts = div.getElementsByTagName('script');
+        for (let i = scripts.length - 1; i >= 0; i--) {
+          scripts[i].parentNode.removeChild(scripts[i]);
+        }
+
+        // Preserve allowed tags
+        const allowedTags = ['strong', 'em', 'b', 'i', 'u', 'a', 'p', 'br', 'ul', 'ol', 'li'];
+        const elements = div.getElementsByTagName('*');
+        for (let i = elements.length - 1; i >= 0; i--) {
+          const element = elements[i];
+          if (!allowedTags.includes(element.tagName.toLowerCase())) {
+            element.outerHTML = element.innerHTML;
+          }
+        }
+
+        return div.innerHTML;
       },
 
       /**
@@ -2039,78 +2035,69 @@ var TextRevealer = (function () {
                 <path d="M31.708 25.708c-0-0-0-0-0-0l-9.708-9.708 9.708-9.708c0-0 0-0 0-0 0.105-0.105 0.18-0.227 0.229-0.357 0.133-0.356 0.057-0.771-0.229-1.057l-4.586-4.586c-0.286-0.286-0.702-0.361-1.057-0.229-0.13 0.048-0.252 0.124-0.357 0.228 0 0-0 0-0 0l-9.708 9.708-9.708-9.708c-0-0-0-0-0-0-0.105-0.104-0.227-0.18-0.357-0.228-0.356-0.133-0.771-0.057-1.057 0.229l-4.586 4.586c-0.286 0.286-0.361 0.702-0.229 1.057 0.049 0.13 0.124 0.252 0.229 0.357 0 0 0 0 0 0l9.708 9.708-9.708 9.708c-0 0-0 0-0 0-0.104 0.105-0.18 0.227-0.229 0.357-0.133 0.355-0.057 0.771 0.229 1.057l4.586 4.586c0.286 0.286 0.702 0.361 1.057 0.229 0.13-0.049 0.252-0.124 0.357-0.229 0-0 0-0 0-0l9.708-9.708 9.708 9.708c0 0 0 0 0 0 0.105 0.105 0.227 0.18 0.357 0.229 0.356 0.133 0.771 0.057 1.057-0.229l4.586-4.586c0.286-0.286 0.362-0.702 0.229-1.057-0.049-0.13-0.124-0.252-0.229-0.357z"></path>
               </svg>
             </div>
-            <div class="trjs__header">${this.text}</div>
+            <div class="trjs__header"></div>
           </div>
         `;
 
         const selection = window.getSelection();
         if (selection.rangeCount) {
-          const range = selection.getRangeAt(0).cloneRange();
-          range.surroundContents(span);
-          selection.removeAllRanges();
-          selection.addRange(range);
+          const range = selection.getRangeAt(0);
+          const originalContent = range.cloneContents();
 
+          // Insert the span without modifying the original content
+          const rangeSpan = document.createElement('span');
+          rangeSpan.appendChild(originalContent);
+          range.deleteContents();
+          range.insertNode(rangeSpan);
+
+          // Set up the popover
           span.appendChild(popover);
+          document.body.appendChild(span);
+
+          // Set the sanitized content in the popover
+          const headerDiv = popover.querySelector('.trjs__header');
+          headerDiv.innerHTML = this.text;
 
           if (options.scrollIntoView) {
             span.scrollIntoView({ behavior: "smooth" });
           }
 
-          this.positionPopover();
+          this.positionPopover(rangeSpan, span);
 
-          document.getElementById('trjs-close').addEventListener('click', this.closePopover.bind(this));
+          document.getElementById('trjs-close').addEventListener('click', () => {
+            this.closePopover(rangeSpan, span);
+          });
         }
       },
 
-      /**
-       * Remove the popover element from the DOM and replace with the selected text.
-       */
-      closePopover: function () {
-        const textRevealerEl = document.querySelector('.trjs');
-        textRevealerEl.parentNode.replaceChild(document.createTextNode(this.text), textRevealerEl);
+      closePopover: function (rangeSpan, popoverSpan) {
+        // Replace the range span with its original content
+        const parent = rangeSpan.parentNode;
+        while (rangeSpan.firstChild) {
+          parent.insertBefore(rangeSpan.firstChild, rangeSpan);
+        }
+        parent.removeChild(rangeSpan);
+
+        // Remove the popover
+        popoverSpan.remove();
 
         this.text = null;
         this.targetTag = null;
       },
 
-      /**
-       * Calculate the position of the provided element.
-       * @param {Object} element 
-       */
-      getPosition: function (element) {
-        let xPosition = 0;
-        let yPosition = 0;
-
-        while (element) {
-          xPosition += (element.offsetLeft - element.scrollLeft + element.clientLeft);
-          yPosition += (element.offsetTop - element.scrollTop + element.clientTop);
-          element = element.offsetParent;
-        }
-
-        return {
-          x: xPosition,
-          y: yPosition
-        };
-      },
-
-      /**
-       * Align the popover to the left or right of the selected text so that it doesn't
-       * overflow the window width.
-       */
-      positionPopover: function () {
-        const popover = document.querySelector('.trjs-popover');
+      positionPopover: function (rangeSpan, popoverSpan) {
+        const popover = popoverSpan.querySelector('.trjs-popover');
         if (popover) {
-          // width of the window.
+          const rect = rangeSpan.getBoundingClientRect();
           const ww = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-          // position of the hovered element relative to window.
-          const pos = this.getPosition(popover);
 
-          // element is on right side of viewport.
-          if (pos.x > (ww / 2)) {
-            popover.style.right = '0';
-            // element is on left side of viewport.
-          } else {
-            popover.style.left = '0';
+          popoverSpan.style.position = 'absolute';
+          popoverSpan.style.left = `${rect.left}px`;
+          popoverSpan.style.top = `${rect.bottom + window.scrollY}px`;
+
+          // Adjust horizontal position if it overflows the viewport
+          if (rect.left + popover.offsetWidth > ww) {
+            popoverSpan.style.left = `${ww - popover.offsetWidth - 10}px`;
           }
         }
       }
