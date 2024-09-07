@@ -2027,10 +2027,7 @@ var TextRevealer = (function () {
         // Remove any existing popovers
         this.removeExistingPopovers();
 
-        const span = document.createElement("span");
-        span.classList.add('trjs-container');
-
-        const popover = document.createElement('dfn');
+        const popover = document.createElement('div');
         popover.classList.add('trjs-popover-wrapper');
         popover.innerHTML = `
           <div class="trjs-popover ${options.skin === 'dark' ? 'trjs-popover--dark' : ''}">
@@ -2046,32 +2043,25 @@ var TextRevealer = (function () {
         const selection = window.getSelection();
         if (selection.rangeCount) {
           const range = selection.getRangeAt(0);
-          const originalContent = range.cloneContents();
-
-          // Insert the span without modifying the original content
-          const rangeSpan = document.createElement('span');
-          rangeSpan.appendChild(originalContent);
-          range.deleteContents();
-          range.insertNode(rangeSpan);
+          const rect = range.getBoundingClientRect();
 
           // Set up the popover
-          span.appendChild(popover);
-          document.body.appendChild(span);
+          document.body.appendChild(popover);
 
           // Set the sanitized content in the popover
           const headerDiv = popover.querySelector('.trjs__header');
           headerDiv.innerHTML = this.text;
 
           if (options.scrollIntoView) {
-            span.scrollIntoView({ behavior: "smooth" });
+            popover.scrollIntoView({ behavior: "smooth" });
           }
 
-          this.positionPopover(rangeSpan, span);
+          this.positionPopover(rect, popover);
 
           document.getElementById('trjs-close').addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
-            this.closePopover(rangeSpan, span);
+            this.closePopover(popover);
           });
 
           // Add click event listener to close popover when clicking outside
@@ -2082,30 +2072,16 @@ var TextRevealer = (function () {
       },
 
       removeExistingPopovers: function () {
-        const existingPopovers = document.querySelectorAll('.trjs-container');
+        const existingPopovers = document.querySelectorAll('.trjs-popover-wrapper');
         existingPopovers.forEach(popover => {
-          const rangeSpan = popover.querySelector('dfn');
-          if (rangeSpan) {
-            this.closePopover(rangeSpan, popover);
-          } else {
-            popover.remove();
-          }
+          popover.remove();
         });
       },
 
-      closePopover: function (rangeSpan, popoverSpan) {
-        // Replace the range span with its original content
-        if (rangeSpan && rangeSpan.parentNode) {
-          const parent = rangeSpan.parentNode;
-          while (rangeSpan.firstChild) {
-            parent.insertBefore(rangeSpan.firstChild, rangeSpan);
-          }
-          parent.removeChild(rangeSpan);
-        }
-
+      closePopover: function (popover) {
         // Remove the popover
-        if (popoverSpan) {
-          popoverSpan.remove();
+        if (popover) {
+          popover.remove();
         }
 
         // Remove the event listener for outside clicks
@@ -2116,26 +2092,22 @@ var TextRevealer = (function () {
       },
 
       handleOutsideClick: function (event) {
-        const popover = document.querySelector('.trjs-container');
+        const popover = document.querySelector('.trjs-popover-wrapper');
         if (popover && !popover.contains(event.target)) {
           this.removeExistingPopovers();
         }
       },
 
-      positionPopover: function (rangeSpan, popoverSpan) {
-        const popover = popoverSpan.querySelector('.trjs-popover');
-        if (popover) {
-          const rect = rangeSpan.getBoundingClientRect();
-          const ww = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+      positionPopover: function (rect, popover) {
+        const ww = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 
-          popoverSpan.style.position = 'absolute';
-          popoverSpan.style.left = `${rect.left}px`;
-          popoverSpan.style.top = `${rect.bottom + window.scrollY}px`;
+        popover.style.position = 'absolute';
+        popover.style.left = `${rect.left}px`;
+        popover.style.top = `${rect.bottom + window.scrollY}px`;
 
-          // Adjust horizontal position if it overflows the viewport
-          if (rect.left + popover.offsetWidth > ww) {
-            popoverSpan.style.left = `${ww - popover.offsetWidth - 10}px`;
-          }
+        // Adjust horizontal position if it overflows the viewport
+        if (rect.left + popover.offsetWidth > ww) {
+          popover.style.left = `${ww - popover.offsetWidth - 10}px`;
         }
       }
 
