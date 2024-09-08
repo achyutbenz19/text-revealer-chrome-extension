@@ -2751,9 +2751,19 @@ var TextRevealer = (function () {
 
           // Fetch and display the API result
           this.handleFetch(this.text)
-            .then((response) => {
+            .then(async (response) => {
+              const reader = response.body.getReader();
+              const decoder = new TextDecoder("utf-8");
               const contentDiv = popover.querySelector(".trjs__content");
-              contentDiv.innerHTML = `<p>${response}</p>`;
+              contentDiv.innerHTML = '<p></p>';
+              const contentP = contentDiv.querySelector('p');
+
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                contentP.innerHTML += chunk;
+              }
             })
             .catch((error) => {
               console.error("Error fetching data:", error);
@@ -2921,15 +2931,9 @@ var TextRevealer = (function () {
             `,
             filter: {},
             k: 5,
-            stream: false,
+            stream: true, // Enable streaming
           }),
-        })
-          .then((response) => response.json())
-          .then((data) => data.response)
-          .catch((error) => {
-            console.error("Error calling query method:", error);
-            throw error;
-          });
+        });
       },
     };
   };
