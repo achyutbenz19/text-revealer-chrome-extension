@@ -1,10 +1,9 @@
 ---
 name: Issue report
 about: Create a report to help us improve
-title: ''
-labels: ''
+title: ""
+labels: ""
 assignees: jamigibbs
-
 ---
 
 **Describe the issue**
@@ -15,6 +14,7 @@ Provide a link to the website that the issue happened.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
@@ -24,9 +24,10 @@ Steps to reproduce the behavior:
 If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+
+- OS: [e.g. iOS]
+- Browser [e.g. chrome, safari]
+- Version [e.g. 22]
 
 **Additional context**
 Add any other context about the problem here.
