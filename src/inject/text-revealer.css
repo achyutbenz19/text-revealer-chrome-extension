@@ -201,3 +201,21 @@
   background: #333;
   color: white;
 }
+
+.trjs__loading {
+  text-align: center;
+  padding: 10px;
+  font-style: italic;
+}
+
+.trjs__content {
+  padding: 10px;
+  background-color: #f8f8f8;
+  border-top: 1px solid #e0e0e0;
+}
+
+.trjs-popover--dark .trjs__content {
+  background-color: #2a2a2a;
+  border-top: 1px solid #444;
+  color: #f0f0f0;
+}

@@ -1847,6 +1847,12 @@ var TextRevealer = (function () {
           document.onmouseup = this.debounced(options.delay, this.handleTextReveal.bind(this));
           if (!document.all) document.captureEvents(Event.MOUSEUP);
         });
+
+        // Add URL change listener
+        this.addUrlChangeListener();
+
+        // Call /init method on initial load
+        this.callInitMethod();
       },
 
       /**
@@ -1987,36 +1993,7 @@ var TextRevealer = (function () {
        * @return {Object}  Data from fetch requests.
        */
       handleFetch: function (searchText) {
-        this.searchTextCount = searchText.split(' ').length;
-        let routePromises = [];
-
-        return new Promise((resolve, reject) => {
-
-          /**
-           * Wikipedia Route.
-           */
-          if (options.wikipedia) {
-            const wikiSearchRoute = Wikipedia.searchRoute(searchText);
-            const wikiRoutePromise = this.fetchRoute('wikiSearch', wikiSearchRoute);
-            routePromises.push(wikiRoutePromise);
-          }
-          /**
-           * Dictionary Route.
-           */
-          if (options.merriamWebsterDictionary && this.searchTextCount === 1) {
-            const dictionaryRoute = MerriamWebsterDictionary.searchRoute({
-              searchText: searchText,
-              key: options.merriamWebsterDictionary
-            });
-            const dictionaryRoutePromise = this.fetchRoute('dictionary', dictionaryRoute);
-            routePromises.push(dictionaryRoutePromise);
-          }
-
-          Promise.all(routePromises).then((res) => {
-            resolve(res);
-          })
-            .catch((error) => reject(error));
-        })
+        return this.callQueryMethod(searchText);
       },
 
       /**
@@ -2037,6 +2014,9 @@ var TextRevealer = (function () {
               </svg>
             </div>
             <div class="trjs__header"></div>
+            <div class="trjs__content">
+              <div class="trjs__loading">Loading...</div>
+            </div>
           </div>
         `;
 
@@ -2051,6 +2031,16 @@ var TextRevealer = (function () {
           // Set the sanitized content in the popover
           const headerDiv = popover.querySelector('.trjs__header');
           headerDiv.innerHTML = this.text;
+
+          // Fetch and display the API result
+          this.handleFetch(this.text).then(response => {
+            const contentDiv = popover.querySelector('.trjs__content');
+            contentDiv.innerHTML = `<p>${response}</p>`;
+          }).catch(error => {
+            console.error('Error fetching data:', error);
+            const contentDiv = popover.querySelector('.trjs__content');
+            contentDiv.innerHTML = '<p>Error fetching data. Please try again.</p>';
+          });
 
           if (options.scrollIntoView) {
             popover.scrollIntoView({ behavior: "smooth" });
@@ -2109,8 +2099,59 @@ var TextRevealer = (function () {
         if (rect.left + popover.offsetWidth > ww) {
           popover.style.left = `${ww - popover.offsetWidth - 10}px`;
         }
-      }
+      },
 
+      addUrlChangeListener: function () {
+        let lastUrl = location.href;
+        new MutationObserver(() => {
+          const url = location.href;
+          if (url !== lastUrl) {
+            lastUrl = url;
+            this.callInitMethod();
+          }
+        }).observe(document, { subtree: true, childList: true });
+      },
+
+      callInitMethod: function () {
+        fetch('http://127.0.0.1:8000/init', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            index_name: "quickstart",
+            master_prompt: "You are a helpful assistant. What does the text mean?"
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Init method called successfully:', data);
+          })
+          .catch(error => {
+            console.error('Error calling init method:', error);
+          });
+      },
+
+      callQueryMethod: function (query) {
+        return fetch('http://127.0.0.1:8000/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: query,
+            filter: {},
+            k: 5,
+            stream: false
+          })
+        })
+          .then(response => response.json())
+          .then(data => data.response)
+          .catch(error => {
+            console.error('Error calling query method:', error);
+            throw error;
+          });
+      }
     }
   };
 
