@@ -2895,7 +2895,18 @@ var TextRevealer = (function () {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            query: `Here is the text you need to interpret: \n${query}. Here is the context:`,
+            query: `
+            You are tasked with interpreting a given query in light of provided context. Your goal is to provide a concise interpretation in three sentences.
+
+            Here is the query you need to interpret:
+            <query>
+            ${query}
+            </query>
+
+            Please interpret this query considering the given context. Your interpretation should be concise and to the point. Focus on the main ideas and implications of the query in relation to the context.
+
+            Provide your interpretation in exactly one or two sentences. Make sure your response is clear, concise, coherent, and captures the essence of the query in light of the context. Answer in a clear and natural way.
+            `,
             filter: {},
             k: 5,
             stream: false,
