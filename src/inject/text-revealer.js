@@ -2553,7 +2553,7 @@ var TextRevealer = (function () {
       addWebFont: function () {
         window.WebFontConfig = {
           google: {
-            families: ["Open+Sans:400,300,700", "Crimson+Text:400,700"],
+            families: ['Inter:400,600', 'Open+Sans:400,300,700', 'Crimson+Text:400,700'],
           },
         };
 
@@ -2723,16 +2723,17 @@ var TextRevealer = (function () {
         const popover = document.createElement("div");
         popover.classList.add("trjs-popover-wrapper");
         popover.innerHTML = `
-          <div class="trjs-popover ${options.skin === "dark" ? "trjs-popover--dark" : ""
-          }">
-            <div id="trjs-close">
-              <svg class="icon" viewBox="0 0 32 32" width="16" height="16">
-                <path d="M31.708 25.708c-0-0-0-0-0-0l-9.708-9.708 9.708-9.708c0-0 0-0 0-0 0.105-0.105 0.18-0.227 0.229-0.357 0.133-0.356 0.057-0.771-0.229-1.057l-4.586-4.586c-0.286-0.286-0.702-0.361-1.057-0.229-0.13 0.048-0.252 0.124-0.357 0.228 0 0-0 0-0 0l-9.708 9.708-9.708-9.708c-0 0-0 0-0 0-0.105-0.104-0.227-0.18-0.357-0.228-0.356-0.133-0.771-0.057-1.057 0.229l-4.586 4.586c-0.286 0.286-0.361 0.702-0.229 1.057 0.049 0.13 0.124 0.252 0.229 0.357 0 0 0 0 0 0l9.708 9.708-9.708 9.708c-0 0-0 0-0 0-0.105 0.105-0.18 0.227-0.229 0.357-0.133 0.355-0.057 0.771 0.229 1.057l4.586 4.586c0.286 0.286 0.702 0.361 1.057 0.229 0.13-0.049 0.252-0.124 0.357-0.229 0-0 0-0 0-0l9.708-9.708 9.708 9.708c0 0 0 0 0 0 0.105 0.105 0.227 0.18 0.357 0.229 0.356 0.133 0.771 0.057 1.057-0.229l4.586-4.586c0.286-0.286 0.362-0.702 0.229-1.057-0.049-0.13-0.124-0.252-0.229-0.357z"></path>
-              </svg>
+          <div class="trjs-popover ${options.skin === "dark" ? "trjs-popover--dark" : ""}">
+            <div class="trjs-popover__header">
+              <div class="trjs__header"></div>
+              <div id="trjs-close">
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                  <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </div>
             </div>
-            <div class="trjs__header"></div>
             <div class="trjs__content">
-              <div class="trjs__loading">Loading...</div>
+              <div class="trjs__loading">Generating...</div>
             </div>
           </div>
         `;
@@ -2770,6 +2771,10 @@ var TextRevealer = (function () {
               const contentDiv = popover.querySelector(".trjs__content");
               contentDiv.innerHTML =
                 "<p>Error fetching data. Please try again.</p>";
+            })
+            .finally(() => {
+              // Remove loading indicator
+              popover.querySelector(".trjs__loading").remove();
             });
 
           this.positionPopover(rect, popover);
