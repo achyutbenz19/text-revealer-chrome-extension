@@ -302,6 +302,8 @@
 
 .trjs__actions {
   margin-top: 10px;
+  display: flex;
+  flex-direction: row;
 }
 
 .trjs__action-btn {
@@ -312,6 +314,8 @@
   transition: all 0.3s ease;
   padding: 5px;
   border-radius: 5px;
+  width: 24px;
+  height: 24px;
 }
 
 .trjs__action-btn:hover {
@@ -328,4 +332,6 @@
 
 .trjs__action-btn svg {
   display: block;
+  width: 16px;
+  height: 16px;
 }

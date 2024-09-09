@@ -2630,13 +2630,13 @@ var TextRevealer = (function () {
           if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
 
-            // Check if the selection is within any existing popover
-            const existingPopovers = document.querySelectorAll('.trjs-popover-wrapper');
+            // Check if the selection is within any existing popover or copy button
+            const existingPopovers = document.querySelectorAll('.trjs-popover-wrapper, #trjs-copy');
             for (let popover of existingPopovers) {
               if (popover.contains(range.commonAncestorContainer) ||
                 popover.contains(range.startContainer) ||
                 popover.contains(range.endContainer)) {
-                // Selection is within a popover, do not create a new one
+                // Selection is within a popover or copy button, do not create a new one
                 return;
               }
             }
@@ -2739,12 +2739,12 @@ var TextRevealer = (function () {
               </div>
             </div>
             <div class="trjs__actions">
-              <button class="trjs__action-btn" id="trjs-copy">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-              </button>
-              <button class="trjs__action-btn" id="trjs-share">
+              <div class="trjs__action-btn" id="trjs-copy">
+                <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              </div>
+              <div class="trjs__action-btn" id="trjs-share">
                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
-              </button>
+              </div>
             </div>
           </div>
         `;
@@ -2761,6 +2761,9 @@ var TextRevealer = (function () {
           const headerDiv = popover.querySelector(".trjs__header");
           headerDiv.innerHTML = this.text;
 
+          let contentP; // Declare contentP outside the fetch promise
+          let fetchCompleted = false; // Add this flag
+
           // Fetch and display the API result
           this.handleFetch(this.text)
             .then(async (response) => {
@@ -2768,7 +2771,7 @@ var TextRevealer = (function () {
               const decoder = new TextDecoder("utf-8");
               const contentDiv = popover.querySelector(".trjs__content");
               contentDiv.innerHTML = '<p class="trjs__response"></p>';
-              const contentP = contentDiv.querySelector('.trjs__response');
+              contentP = contentDiv.querySelector('.trjs__response');
 
               let fullResponse = '';
               while (true) {
@@ -2781,12 +2784,14 @@ var TextRevealer = (function () {
                 // Animate the typing effect
                 contentP.scrollTop = contentP.scrollHeight;
               }
+              fetchCompleted = true; // Set the flag when fetch is complete
             })
             .catch((error) => {
               console.error("Error fetching data:", error);
               const contentDiv = popover.querySelector(".trjs__content");
               contentDiv.innerHTML =
                 "<p>Error fetching data. Please try again.</p>";
+              fetchCompleted = true; // Set the flag even if there's an error
             })
             .finally(() => {
               // Remove loading indicator
@@ -2803,12 +2808,22 @@ var TextRevealer = (function () {
               this.closePopover(popover);
             });
 
-          document.getElementById("trjs-copy").addEventListener("click", () => {
-            const content = popover.querySelector(".trjs__response").textContent;
-            navigator.clipboard.writeText(content).then(() => {
-              this.showToast("Content copied to clipboard");
-            });
-          });
+          // Update the copy functionality
+          document.getElementById("trjs-copy").addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (fetchCompleted && contentP) {
+              const content = contentP.textContent;
+              navigator.clipboard.writeText(content).then(() => {
+                const copyButton = e.currentTarget;
+                copyButton.classList.add('copied');
+                setTimeout(() => {
+                  copyButton.classList.remove('copied');
+                }, 5000);
+              });
+            }
+          }, true);
 
           document.getElementById("trjs-share").addEventListener("click", () => {
             const content = popover.querySelector(".trjs__response").textContent;
