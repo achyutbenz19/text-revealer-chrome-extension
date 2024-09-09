@@ -2758,10 +2758,6 @@ var TextRevealer = (function () {
           // Set up the popover
           document.body.appendChild(popover);
 
-          // // Set the sanitized content in the popover
-          // const headerDiv = popover.querySelector(".trjs__header");
-          // headerDiv.innerHTML = this.text;
-
           // Set the context in the popover
           const contextDiv = popover.querySelector(".trjs__context");
           const fullContext = this.getFullContext(this.text);
@@ -3009,19 +3005,17 @@ var TextRevealer = (function () {
             query: `
             You are tasked with interpreting a given query in light of provided context. Your goal is to provide a concise interpretation in one or two sentences.
 
-            Here is the query you need to interpret:
-            <query>
-            ${query}
-            </query>
-
-            Here is the full context (sentence or paragraph) containing the query:
-            <context>
+            Here is the immediate context (sentence or paragraph) containing the query:
+            <immediate_context>
             ${this.getFullContext(query)}
-            </context>
+            </immediate_context>
 
-            Please interpret this query considering the given context. Your interpretation should be concise and to the point. Focus on the main ideas and implications of the query in relation to the full context provided.
+            Additional relevant context from the document will be provided after this prompt by the backend system. Please consider both the immediate context and the additional context when interpreting the query.
 
-            Provide your interpretation in exactly one or two sentences. Make sure your response is clear, concise, coherent, and captures the essence of the query in light of the context. Answer in a clear and natural way.
+            Please interpret this query considering all the given context. Your interpretation should be concise and to the point. Focus on the main ideas and implications of the query in relation to the full context provided.
+
+            Provide your interpretation in exactly one or two sentences. Make sure your response is clear, concise, coherent, and captures the essence of the query in light of all the context. Answer in a clear and natural way.
+
             `,
             filter: {},
             k: 5,
