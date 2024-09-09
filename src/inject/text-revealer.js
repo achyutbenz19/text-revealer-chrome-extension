@@ -2733,7 +2733,18 @@ var TextRevealer = (function () {
               </div>
             </div>
             <div class="trjs__content">
-              <div class="trjs__loading">Generating...</div>
+              <div class="trjs__loading">
+                <div class="trjs__loading-spinner"></div>
+                <span>Generating insights...</span>
+              </div>
+            </div>
+            <div class="trjs__actions">
+              <button class="trjs__action-btn" id="trjs-copy">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              </button>
+              <button class="trjs__action-btn" id="trjs-share">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+              </button>
             </div>
           </div>
         `;
@@ -2756,14 +2767,19 @@ var TextRevealer = (function () {
               const reader = response.body.getReader();
               const decoder = new TextDecoder("utf-8");
               const contentDiv = popover.querySelector(".trjs__content");
-              contentDiv.innerHTML = '<p></p>';
-              const contentP = contentDiv.querySelector('p');
+              contentDiv.innerHTML = '<p class="trjs__response"></p>';
+              const contentP = contentDiv.querySelector('.trjs__response');
 
+              let fullResponse = '';
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 const chunk = decoder.decode(value, { stream: true });
-                contentP.innerHTML += chunk;
+                fullResponse += chunk;
+                contentP.innerHTML = fullResponse;
+
+                // Animate the typing effect
+                contentP.scrollTop = contentP.scrollHeight;
               }
             })
             .catch((error) => {
@@ -2787,6 +2803,23 @@ var TextRevealer = (function () {
               this.closePopover(popover);
             });
 
+          document.getElementById("trjs-copy").addEventListener("click", () => {
+            const content = popover.querySelector(".trjs__response").textContent;
+            navigator.clipboard.writeText(content).then(() => {
+              this.showToast("Content copied to clipboard");
+            });
+          });
+
+          document.getElementById("trjs-share").addEventListener("click", () => {
+            const content = popover.querySelector(".trjs__response").textContent;
+            const shareData = {
+              title: "Shared Insight",
+              text: content,
+              url: window.location.href
+            };
+            navigator.share(shareData).catch((error) => console.log('Error sharing', error));
+          });
+
           // Add click event listener to close popover when clicking outside
           setTimeout(() => {
             document.addEventListener(
@@ -2809,7 +2842,12 @@ var TextRevealer = (function () {
       closePopover: function (popover) {
         // Remove the popover
         if (popover) {
-          popover.remove();
+          popover.style.opacity = '0';
+          popover.style.transform = 'translateY(10px)';
+
+          setTimeout(() => {
+            popover.remove();
+          }, 300);
         }
 
         // Remove the event listener for outside clicks
@@ -2839,6 +2877,31 @@ var TextRevealer = (function () {
         if (rect.left + popover.offsetWidth > ww) {
           popover.style.left = `${ww - popover.offsetWidth - 10}px`;
         }
+
+        popover.style.opacity = '0';
+        popover.style.transform = 'translateY(10px)';
+
+        setTimeout(() => {
+          popover.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          popover.style.opacity = '1';
+          popover.style.transform = 'translateY(0)';
+        }, 50);
+      },
+
+      showToast: function (message) {
+        const toast = document.createElement("div");
+        toast.classList.add("trjs-toast");
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.classList.add("trjs-toast--visible");
+        }, 100);
+
+        setTimeout(() => {
+          toast.classList.remove("trjs-toast--visible");
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
       },
 
       addUrlChangeListener: function () {

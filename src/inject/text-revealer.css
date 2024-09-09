@@ -299,3 +299,33 @@
 #trjs-close svg {
   display: block;
 }
+
+.trjs__actions {
+  margin-top: 10px;
+}
+
+.trjs__action-btn {
+  cursor: pointer;
+  margin-right: 5px;
+  border: none;
+  background-color: transparent;
+  transition: all 0.3s ease;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.trjs__action-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.trjs-popover--dark .trjs__action-btn {
+  background-color: #333;
+}
+
+.trjs-popover--dark .trjs__action-btn:hover {
+  background-color: #444;
+}
+
+.trjs__action-btn svg {
+  display: block;
+}
