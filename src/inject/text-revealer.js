@@ -2479,18 +2479,8 @@ var TextRevealer = (function () {
 
       init: function () {
         /**
-         * Bail if user is on a mobile device. This script does not support touch devices.
+         * Remove the mobile device check to allow the script to run on all devices
          */
-        const isMobile = window.matchMedia(
-          "only screen and (max-width: 1024px)",
-        ).matches;
-        if (isMobile) return;
-
-        /**
-         * Bail if the script is getting loaded in an iframe.
-         */
-        if (window.location !== window.parent.location) return;
-
         window.addEventListener("DOMContentLoaded", () => {
           this.addWebFont();
         });
@@ -2529,11 +2519,15 @@ var TextRevealer = (function () {
           });
 
           /**
-           * Binding the mouseup event to capture selected or highlighted text.
+           * Use touchend event for touch devices in addition to mouseup
            */
+          document.addEventListener('touchend', this.debounced(
+            options.delay,
+            this.handleTextReveal.bind(this)
+          ));
           document.onmouseup = this.debounced(
             options.delay,
-            this.handleTextReveal.bind(this),
+            this.handleTextReveal.bind(this)
           );
           if (!document.all) document.captureEvents(Event.MOUSEUP);
         });
@@ -2884,15 +2878,28 @@ var TextRevealer = (function () {
       positionPopover: function (rect, popover) {
         const ww = Math.max(
           document.documentElement.clientWidth,
-          window.innerWidth || 0,
+          window.innerWidth || 0
+        );
+        const wh = Math.max(
+          document.documentElement.clientHeight,
+          window.innerHeight || 0
         );
 
-        popover.style.position = "absolute";
-        popover.style.left = `${rect.left}px`;
-        popover.style.top = `${rect.bottom + window.scrollY}px`;
+        popover.style.position = "fixed";
+        popover.style.maxWidth = "90vw";
+        popover.style.maxHeight = "80vh";
+        popover.style.overflowY = "auto";
 
-        if (rect.left + popover.offsetWidth > ww) {
-          popover.style.left = `${ww - popover.offsetWidth - 10}px`;
+        // Center the popover horizontally
+        const popoverWidth = Math.min(popover.offsetWidth, ww * 0.9);
+        popover.style.left = `${Math.max(0, (ww - popoverWidth) / 2)}px`;
+
+        // Position the popover vertically
+        if (rect.bottom + popover.offsetHeight > wh) {
+          // If there's not enough space below, position above
+          popover.style.bottom = `${wh - rect.top}px`;
+        } else {
+          popover.style.top = `${rect.bottom}px`;
         }
 
         popover.style.opacity = '0';
