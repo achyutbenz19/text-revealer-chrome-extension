@@ -169,20 +169,12 @@
   overflow: auto;
 }
 
-.trjs-popover .trjs__header {
-  /* Existing styles */
-}
-
 .trjs-popover .trjs__header ul,
 .trjs-popover .trjs__header ol {
   padding-left: 20px;
 }
 
 .trjs-popover .trjs__header li {
-  margin-bottom: 5px;
-}
-
-.trjs-popover .trjs__header p {
   margin-bottom: 10px;
 }
 

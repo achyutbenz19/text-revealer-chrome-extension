@@ -2732,6 +2732,7 @@ var TextRevealer = (function () {
                 </svg>
               </div>
             </div>
+            <div class="trjs__context"></div>
             <div class="trjs__content">
               <div class="trjs__loading">
                 <div class="trjs__loading-spinner"></div>
@@ -2757,9 +2758,14 @@ var TextRevealer = (function () {
           // Set up the popover
           document.body.appendChild(popover);
 
-          // Set the sanitized content in the popover
-          const headerDiv = popover.querySelector(".trjs__header");
-          headerDiv.innerHTML = this.text;
+          // // Set the sanitized content in the popover
+          // const headerDiv = popover.querySelector(".trjs__header");
+          // headerDiv.innerHTML = this.text;
+
+          // Set the context in the popover
+          const contextDiv = popover.querySelector(".trjs__context");
+          const fullContext = this.getFullContext(this.text);
+          contextDiv.innerHTML = `<p><strong>Context:</strong> ${fullContext}</p>`;
 
           let contentP; // Declare contentP outside the fetch promise
           let fetchCompleted = false; // Add this flag
@@ -3001,14 +3007,19 @@ var TextRevealer = (function () {
           },
           body: JSON.stringify({
             query: `
-            You are tasked with interpreting a given query in light of provided context. Your goal is to provide a concise interpretation in three sentences.
+            You are tasked with interpreting a given query in light of provided context. Your goal is to provide a concise interpretation in one or two sentences.
 
             Here is the query you need to interpret:
             <query>
             ${query}
             </query>
 
-            Please interpret this query considering the given context. Your interpretation should be concise and to the point. Focus on the main ideas and implications of the query in relation to the context.
+            Here is the full context (sentence or paragraph) containing the query:
+            <context>
+            ${this.getFullContext(query)}
+            </context>
+
+            Please interpret this query considering the given context. Your interpretation should be concise and to the point. Focus on the main ideas and implications of the query in relation to the full context provided.
 
             Provide your interpretation in exactly one or two sentences. Make sure your response is clear, concise, coherent, and captures the essence of the query in light of the context. Answer in a clear and natural way.
             `,
@@ -3017,6 +3028,40 @@ var TextRevealer = (function () {
             stream: true, // Enable streaming
           }),
         });
+      },
+
+      getFullContext: function (query) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const startNode = range.startContainer;
+          const endNode = range.endContainer;
+
+          // Find the common ancestor of the start and end nodes
+          let commonAncestor = range.commonAncestorContainer;
+          while (commonAncestor && commonAncestor.nodeType !== Node.ELEMENT_NODE) {
+            commonAncestor = commonAncestor.parentNode;
+          }
+
+          if (commonAncestor) {
+            // If the selected text is short, return the entire paragraph
+            if (query.length < 50) {
+              return commonAncestor.innerText || commonAncestor.textContent;
+            } else {
+              // For longer selections, return the selected text plus surrounding sentences
+              const fullText = commonAncestor.innerText || commonAncestor.textContent;
+              const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
+              const selectedTextIndex = sentences.findIndex(sentence => sentence.includes(query));
+
+              if (selectedTextIndex !== -1) {
+                const start = Math.max(0, selectedTextIndex - 1);
+                const end = Math.min(sentences.length, selectedTextIndex + 2);
+                return sentences.slice(start, end).join(' ');
+              }
+            }
+          }
+        }
+        return query; // Fallback to just the query if we can't get more context
       },
     };
   };
