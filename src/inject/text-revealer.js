@@ -2486,25 +2486,9 @@ var TextRevealer = (function () {
         });
 
         window.addEventListener("load", () => {
-          /**
-           * Adding the on/off toggle to the end of the body tag.
-           */
-          this.addToggle();
+          // Set isActive to true by default
+          this.isActive = true;
 
-          /**
-           * Handling when on/off toggle is triggered.
-           */
-          document
-            .querySelector(".trjs-toggle-inner input")
-            .addEventListener("change", this.handleToggleChange.bind(this));
-
-          /**
-           * Watching for clicks on the document body.
-           *
-           * If the click happened outside an active text revealer popover,
-           * we close the active popover. Otherwise, set the targeted tag for
-           * eventually displaying a new popover.
-           */
           document.body.addEventListener("click", (event) => {
             const textRevealerEl = document.querySelector(".trjs");
             if (
@@ -2559,39 +2543,6 @@ var TextRevealer = (function () {
           wf.async = true;
           s.parentNode.insertBefore(wf, s);
         })(document);
-      },
-
-      addToggle: function () {
-        const body = document.getElementsByTagName("body")[0];
-        const newToggleEl = document.createElement("div");
-
-        newToggleEl.classList.add("trjs-toggle-container");
-        newToggleEl.innerHTML = ToggleTemplate();
-        body.appendChild(newToggleEl);
-
-        /**
-         * Set the toggle to on by default
-         */
-        this.isActive = true;
-        newToggleEl.querySelector("input").checked = true;
-        const localStorage = window.localStorage;
-        localStorage.setItem("trjs-active", "true");
-      },
-
-      /**
-       * Assigning the active state.
-       * @param {Object} - The event fired when on/off is toggled.
-       */
-      handleToggleChange: function (event) {
-        const localStorage = window.localStorage;
-
-        if (event.target.checked) {
-          this.isActive = true;
-          localStorage.setItem("trjs-active", "true");
-        } else {
-          this.isActive = false;
-          localStorage.removeItem("trjs-active");
-        }
       },
 
       /**
@@ -2885,22 +2836,30 @@ var TextRevealer = (function () {
           window.innerHeight || 0
         );
 
-        popover.style.position = "fixed";
-        popover.style.maxWidth = "90vw";
-        popover.style.maxHeight = "80vh";
-        popover.style.overflowY = "auto";
+        popover.style.position = "absolute";
+        popover.style.maxWidth = "300px"; // Set a fixed max-width
+        popover.style.maxHeight = "600px"; // Set a fixed max-height
+        popover.style.overflowY = "auto"; // Make it scrollable
+        popover.style.padding = "15px"; // Add padding
 
-        // Center the popover horizontally
-        const popoverWidth = Math.min(popover.offsetWidth, ww * 0.9);
-        popover.style.left = `${Math.max(0, (ww - popoverWidth) / 2)}px`;
+        // Position the popover next to the highlighted text
+        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
-        // Position the popover vertically
-        if (rect.bottom + popover.offsetHeight > wh) {
-          // If there's not enough space below, position above
-          popover.style.bottom = `${wh - rect.top}px`;
-        } else {
-          popover.style.top = `${rect.bottom}px`;
+        let left = rect.right + scrollX;
+        let top = rect.top + scrollY;
+
+        // Adjust position if it goes off-screen
+        if (left + popover.offsetWidth > ww + scrollX) {
+          left = rect.left + scrollX - popover.offsetWidth;
         }
+
+        if (top + popover.offsetHeight > wh + scrollY) {
+          top = wh + scrollY - popover.offsetHeight;
+        }
+
+        popover.style.left = `${Math.max(0, left)}px`;
+        popover.style.top = `${Math.max(0, top)}px`;
 
         popover.style.opacity = '0';
         popover.style.transform = 'translateY(10px)';
