@@ -2473,6 +2473,7 @@ var TextRevealer = (function () {
     this.targetTag = null;
     this.isActive = false;
     this.searchTextCount = 0;
+    this.ttsStarted = false;
 
     return {
       options: this.options,
@@ -2692,7 +2693,7 @@ var TextRevealer = (function () {
                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
               </div>
               <div class="trjs__action-btn" id="trjs-tts">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v12M6 12h12"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
               </div>
             </div>
           </div>
@@ -2785,9 +2786,14 @@ var TextRevealer = (function () {
             navigator.share(shareData).catch((error) => console.log('Error sharing', error));
           });
 
-          document.getElementById("trjs-tts").addEventListener("click", () => {
-            const content = popover.querySelector(".trjs__response").textContent;
-            this.textToSpeech(content);
+          const ttsButton = document.getElementById("trjs-tts");
+          ttsButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent event from bubbling up
+            if (this.isPlaying) {
+              this.stopTextToSpeech();
+            } else {
+              this.textToSpeech(contentP.textContent);
+            }
           });
 
           // Add click event listener to close popover when clicking outside
@@ -2810,6 +2816,9 @@ var TextRevealer = (function () {
       },
 
       closePopover: function (popover) {
+        // Stop TTS if it's playing
+        this.stopTextToSpeech();
+
         // Remove the popover
         if (popover) {
           popover.style.opacity = '0';
@@ -2825,6 +2834,8 @@ var TextRevealer = (function () {
 
         this.text = null;
         this.targetTag = null;
+        this.ttsStarted = false;
+        this.audio = null; // Reset audio when closing popover
       },
 
       handleOutsideClick: function (event) {
@@ -3033,35 +3044,73 @@ var TextRevealer = (function () {
       },
 
       textToSpeech: function (text) {
-        const apiKey = 'insert-api-key-here';
+        if (this.isPlaying) {
+          this.stopTextToSpeech();
+          return;
+        }
+
+        const apiKey = 'sk_b9ceb4c9a23daf76bb6acbe19874bb1ccc485de8a35097a8';
         const voiceId = '21m00Tcm4TlvDq8ikWAM'; // Default voice ID
 
-        fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': apiKey
-          },
-          body: JSON.stringify({
-            text: text,
-            model_id: 'eleven_monolingual_v1',
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.5
-            }
+        if (!this.audio) {
+          fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+            method: 'POST',
+            headers: {
+              'Accept': 'audio/mpeg',
+              'Content-Type': 'application/json',
+              'xi-api-key': apiKey
+            },
+            body: JSON.stringify({
+              text: text,
+              model_id: 'eleven_monolingual_v1',
+              voice_settings: {
+                stability: 0.5,
+                similarity_boost: 0.5
+              }
+            })
           })
-        })
-          .then(response => response.blob())
-          .then(blob => {
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            audio.play();
-          })
-          .catch(error => {
-            console.error('Error calling ElevenLabs TTS API:', error);
-            this.showToast('Error generating speech. Please try again.');
-          });
+            .then(response => response.blob())
+            .then(blob => {
+              const url = URL.createObjectURL(blob);
+              this.audio = new Audio(url);
+              this.playAudio();
+            })
+            .catch(error => {
+              console.error('Error calling ElevenLabs TTS API:', error);
+              this.showToast('Error generating speech. Please try again.');
+            });
+        } else {
+          this.playAudio();
+        }
+      },
+
+      playAudio: function () {
+        this.audio.play();
+        this.isPlaying = true;
+        this.updateTTSButton();
+
+        this.audio.onended = () => {
+          this.isPlaying = false;
+          this.updateTTSButton();
+        };
+      },
+
+      stopTextToSpeech: function () {
+        if (this.audio && this.isPlaying) {
+          this.audio.pause();
+          this.audio.currentTime = 0;
+          this.isPlaying = false;
+          this.updateTTSButton();
+        }
+      },
+
+      updateTTSButton: function () {
+        const ttsButton = document.getElementById("trjs-tts");
+        if (this.isPlaying) {
+          ttsButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
+        } else {
+          ttsButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+        }
       },
     };
   };

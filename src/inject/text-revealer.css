@@ -327,3 +327,19 @@
   width: 16px;
   height: 16px;
 }
+
+.trjs__action-btn#trjs-tts {
+  transition: all 0.3s ease;
+}
+
+.trjs__action-btn#trjs-tts:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.trjs__action-btn#trjs-tts svg {
+  transition: all 0.3s ease;
+}
+
+.trjs__action-btn#trjs-tts:hover svg {
+  transform: scale(1.1);
+}
