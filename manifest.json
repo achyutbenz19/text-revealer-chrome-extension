@@ -15,16 +15,29 @@
     "open_in_tab": false,
     "chrome_style": true
   },
-  "permissions": ["*://*/*", "storage"],
+  "permissions": [
+    "*://*/*",
+    "storage",
+    "https://api.elevenlabs.io/"
+  ],
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
-      "css": ["src/inject/text-revealer.css"]
+      "matches": [
+        "*://*/*"
+      ],
+      "css": [
+        "src/inject/text-revealer.css"
+      ]
     },
     {
-      "matches": ["*://*/*"],
+      "matches": [
+        "*://*/*"
+      ],
       "run_at": "document_start",
-      "js": ["src/inject/text-revealer.js", "src/inject/init.js"]
+      "js": [
+        "src/inject/text-revealer.js",
+        "src/inject/init.js"
+      ]
     }
   ]
 }
